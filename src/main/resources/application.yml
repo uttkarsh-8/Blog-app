@@ -5,3 +5,6 @@ spring:
 jwt:
   secret: 2UIw4WpK6VzI/x1r+ImJVjK9KfEwPzK+yBKfugLHeHs=
   expiration: 86400000
+
+file:
+  upload-dir: ./uploads/images
