@@ -1,0 +1,12 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/blogdb
+    username: newuser
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
