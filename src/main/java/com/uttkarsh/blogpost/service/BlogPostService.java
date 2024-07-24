@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,14 +58,25 @@ public class BlogPostService {
 
 
     @Transactional
-    public BlogPostDto updateBlogPost(Long id, BlogPostDto blogPostDto) throws IOException {
+    public BlogPostDto updateBlogPost(Long id, BlogPostDto blogPostDto, Long currentUserId) throws IOException {
         BlogPost existingBlogPost = blogPostRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blog post not found with id: " + id));
 
-        existingBlogPost.setTitle(blogPostDto.getTitle());
-        existingBlogPost.setContent(blogPostDto.getContent());
+        // Check if the current user is the author of the blog post
+        if (!existingBlogPost.getAuthor().getId().equals(currentUserId)) {
+            throw new AccessDeniedException("You are not authorized to update this blog post");
+        }
 
-        List<String> updatedImages = new ArrayList<>(blogPostDto.getExistingImages());
+        // Update title and content only if they are not null in the DTO
+        if (blogPostDto.getTitle() != null) {
+            existingBlogPost.setTitle(blogPostDto.getTitle());
+        }
+        if (blogPostDto.getContent() != null) {
+            existingBlogPost.setContent(blogPostDto.getContent());
+        }
+
+        // Handle image updates
+        List<String> updatedImages = new ArrayList<>(blogPostDto.getExistingImages() != null ? blogPostDto.getExistingImages() : existingBlogPost.getImages());
 
         // Delete removed images
         for (String imageUrl : existingBlogPost.getImages()) {
@@ -84,7 +96,6 @@ public class BlogPostService {
         BlogPost updatedBlogPost = blogPostRepository.save(existingBlogPost);
         return blogPostMapper.toDto(updatedBlogPost);
     }
-
     @Transactional
     public void deleteBlogPost(Long id) throws IOException {
         BlogPost blogPost = blogPostRepository.findById(id)
